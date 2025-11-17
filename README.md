@@ -114,3 +114,52 @@ iptables -A FORWARD -i ens33 -o ens34 -m state --state RELATED,ESTABLISHED -j AC
 ```Bash
 
 iptables-save > /etc/iptables/rules.v4
+
+### 4.2. VM `pfSense-NANTES` (Pare-feu Site Principal)
+
+Cette VM est le cœur de la sécurité du site principal. Elle filtre le trafic entrant et sortant et gère les réseaux internes.
+
+#### 4.2.1. Configuration de la VM
+
+| Attribut | Valeur |
+| :--- | :--- |
+| **Système** | pfSense CE 2.7.x / 2.8.x |
+| **Rôle** | Pare-feu de bordure, Routeur, Passerelle par défaut |
+| **Identifiants** | `admin` / *(Mot de passe défini)* |
+
+#### 4.2.2. Interfaces Réseau
+
+| Interface | Nom Physique | Connexion VMware | Adresse IP | Note |
+| :--- | :--- | :--- | :--- | :--- |
+| **WAN** | `em0` | `LAN Segment (WAN_PFSENSE)` | `198.51.100.1/24` | Connecté au routeur FAI |
+| **LAN** | `em1` | `LAN Segment (NANTES_LAN)` | `172.16.1.254/24` | Passerelle pour le LAN |
+
+#### 4.2.3. Configuration Initiale (Wizard)
+
+* **Passerelle WAN (Upstream Gateway) :** `198.51.100.2` (IP du `routerwan`).
+* **DNS :** `8.8.8.8`, `1.1.1.1`.
+* **Sécurité WAN :**
+    * `Block RFC1918 Private Networks` : **DÉCOCHÉ** (Car notre WAN simulé est privé).
+    * `Block bogon networks` : **DÉCOCHÉ**.
+
+---
+
+### 4.4. VM `CLIENT` (Poste d'administration temporaire)
+
+Poste client utilisé pour configurer le pfSense via l'interface Web et tester la connectivité.
+
+#### 4.4.1. Configuration Réseau (Temporaire)
+
+En attente de la mise en place du service DHCP (TP 4), le client est configuré statiquement :
+
+* **Connexion VMware :** `LAN Segment (NANTES_LAN)`
+* **Adresse IP :** `172.16.1.100/24`
+* **Passerelle :** `172.16.1.254`
+* **DNS :** `8.8.8.8`
+
+#### 4.4.2. Tests de Validation
+
+* ✅ **Ping LAN :** Succès vers `172.16.1.254` (pfSense).
+* ✅ **Ping WAN :** Succès vers `198.51.100.2` (Routeur FAI).
+* ✅ **Ping Internet :** Succès vers `8.8.8.8` (Google).
+* ✅ **Accès Web :** Accès au Dashboard pfSense via `https://172.16.1.254`.
