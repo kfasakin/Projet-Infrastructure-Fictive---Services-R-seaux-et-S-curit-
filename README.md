@@ -114,7 +114,7 @@ iptables -A FORWARD -i ens33 -o ens34 -m state --state RELATED,ESTABLISHED -j AC
 ```Bash
 
 iptables-save > /etc/iptables/rules.v4
-
+```
 ### 4.2. VM `pfSense-NANTES` (Pare-feu Site Principal)
 
 Cette VM est le cœur de la sécurité du site principal. Elle filtre le trafic entrant et sortant et gère les réseaux internes.
