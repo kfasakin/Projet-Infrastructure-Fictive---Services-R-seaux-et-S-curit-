@@ -144,19 +144,66 @@ Cette VM est le cœur de la sécurité du site principal. Elle filtre le trafic 
 
 ---
 
-### 4.4. VM `CLIENT` (Poste d'administration temporaire)
+#### 4.2.4. 🛡️ Dépannage Final et Sécurité WAN
+
+Le problème de connectivité LAN vers WAN a été résolu en désactivant les mécanismes de sécurité qui bloquaient le réseau simulé du laboratoire.
+
+* **Routage :** La passerelle par défaut (`198.51.100.2`) a été vérifiée et définie.
+* **Blocage WAN :** Les options **`Block private networks`** et **`Block bogon networks`** sur l'interface WAN ont été **DÉCOCHÉES** pour permettre le trafic issu du routeur Debian.
+* **NAT Sortant :** Le mode **`Manual Outbound NAT rule generation`** a été activé pour garantir la traduction des adresses LAN/DMZ vers le WAN.
+* **Administration SSH :** L'accès sécurisé au pare-feu a été activé via **`System`** > **`Advanced`** > **`Admin Access`** > **`Enable Secure Shell`**.
+
+---
+
+### 4.3. VM `SRV-AD1` (Contrôleur de Domaine - LAN)
+
+**Statut :** Machine brute (non promue AD) configurée statiquement pour le LAN principal.
+
+| Attribut | Valeur | Note |
+| :--- | :--- | :--- |
+| **Nom d'hôte** | `SRV-AD1` | |
+| **Rôle** | Futur Contrôleur de Domaine | |
+| **Connexion VMware** | `LAN Segment (NANTES_LAN)` | Réseau Interne principal. |
+| **Adresse IP** | `172.16.1.1/24` | IP du schéma initial. |
+| **Passerelle** | `172.16.1.254` | Interface LAN du pfSense. |
+| **DNS** | `172.16.1.254` (Temporaire) | Utilisé temporairement pour l'accès Internet (via pfSense) avant l'installation du rôle DNS (`127.0.0.1` final). |
+| **Tests** | ✅ Ping vers WAN/Internet | |
+
+---
+
+### 4.4. VM `SRV-FIC1` (Serveur de Fichiers - DMZ)
+
+**Statut :** Machine clonée depuis `SRV-AD1`, **sysprepée** pour obtenir un SID unique, et déplacée dans la DMZ.
+
+| Attribut | Valeur | Note |
+| :--- | :--- | :--- |
+| **Nom d'hôte** | `SRV-FIC1` | |
+| **Rôle** | Serveur de Fichiers (DFSR) et Serveur Web (DMZ). | |
+| **Connexion VMware** | `LAN Segment (NANTES_DMZ)` | Réseau de zone démilitarisée (TP 1). |
+| **Adresse IP** | `172.16.55.2/24` | IP DMZ demandée par le TP. |
+| **Passerelle** | `172.16.55.1` | Interface DMZ du pfSense (Passerelle de la DMZ). |
+| **Tests** | ✅ Ping vers WAN/Internet | |
+
+---
+
+### 4.5. VM `CLIENT` (Poste d'administration temporaire)
 
 Poste client utilisé pour configurer le pfSense via l'interface Web et tester la connectivité.
 
-#### 4.4.1. Configuration Réseau (Temporaire)
+#### 4.5.1. Configuration Réseau (Temporaire)
 
 En attente de la mise en place du service DHCP (TP 4), le client est configuré statiquement :
 
-* **Connexion VMware :** `LAN Segment (NANTES_LAN)`
-* **Adresse IP :** `172.16.1.100/24`
-* **Passerelle :** `172.16.1.254`
-* **DNS :** `8.8.8.8`
+| Attribut | Valeur | Note |
+| :--- | :--- | :--- |
+| **Connexion VMware** | `LAN Segment (NANTES_LAN)` | |
+| **Adresse IP** | `172.16.1.100/24` | |
+| **Passerelle** | `172.16.1.254` | |
+| **DNS** | `8.8.8.8` | Utilisé temporairement pour les tests DNS. |
+| **Tests** | ✅ Accès Dashboard, Ping Internet | |
 
+
+Tests	✅ Ping vers Passerelle/Internet
 #### 4.4.2. Tests de Validation
 
 * ✅ **Ping LAN :** Succès vers `172.16.1.254` (pfSense).
