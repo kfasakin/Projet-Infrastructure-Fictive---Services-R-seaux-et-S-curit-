@@ -210,3 +210,57 @@ Tests	✅ Ping vers Passerelle/Internet
 * ✅ **Ping WAN :** Succès vers `198.51.100.2` (Routeur FAI).
 * ✅ **Ping Internet :** Succès vers `8.8.8.8` (Google).
 * ✅ **Accès Web :** Accès au Dashboard pfSense via `https://172.16.1.254`.
+
+### 4.3. VM `SRV-FIC1` (Serveur en DMZ)
+
+Ce serveur, initialement cloné depuis la souche AD, a été préparé pour être isolé dans la DMZ.
+
+#### 4.3.1. Déploiement
+
+* **Méthode :** Clonage complet de la VM `SRV-AD1`.
+* **Préparation (Sysprep) :** Exécution de `sysprep /generalize /oobe /reboot` pour régénérer le SID unique et éviter les conflits d'identité dans le futur domaine.
+
+#### 4.3.2. Configuration Réseau
+
+| Attribut | Valeur |
+| :--- | :--- |
+| **Connexion VMware** | `LAN Segment (NANTES_DMZ)` |
+| **Adresse IP** | `172.16.55.2/24` |
+| **Passerelle** | `172.16.55.1` (Interface DMZ du pfSense) |
+| **Rôles prévus** | Serveur de fichiers (DFS), Relais SMTP, Serveur Web |
+
+---
+
+### 4.4. VM `CLIENT` (Poste d'Administration)
+
+Poste client Windows utilisé pour l'administration du pare-feu et les tests de connectivité.
+
+* **Réseau :** `NANTES_LAN`
+* **IP Temporaire :** `172.16.1.100/24` (Gateway: `.254`)
+
+---
+
+## 5. 🛡️ Politique de Sécurité (Filtrage)
+
+Conformément au **TP 1**, des règles de pare-feu strictes ont été mises en place pour cloisonner les réseaux.
+
+### 5.1. Règles sur l'interface LAN
+
+| Action | Protocole | Source | Port Source | Destination | Port Dest. | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ Pass | UDP | `LAN net` | * | * | 53 (DNS) | Autoriser les requêtes DNS |
+| ✅ Pass | ICMP | `LAN net` | * | `Any` | * | Diagnostic réseau (Ping) |
+| ✅ Pass | TCP | `LAN net` | * | `DMZ net` | 3389 (RDP) | Administration des serveurs DMZ |
+| ✅ Pass | TCP | `LAN net` | * | `DMZ net` | 22 (SSH) | Administration SSH vers DMZ |
+| ✅ Pass | TCP | `ADMIN_PC` | * | `This Firewall` | 443/22 | Admin pfSense (via Alias) |
+
+### 5.2. Règles sur l'interface DMZ
+
+La DMZ est une zone contrainte. Seuls les flux nécessaires sont autorisés à sortir.
+
+| Action | Protocole | Source | Port Source | Destination | Port Dest. | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| ✅ Pass | TCP | `SRV-FIC1` | * | `Any` (WAN) | 25 (SMTP) | Relais de messagerie sortant |
+| 🚫 Block | * | `DMZ net` | * | `LAN net` | * | **Interdiction** d'accès au LAN depuis la DMZ |
+
+---
